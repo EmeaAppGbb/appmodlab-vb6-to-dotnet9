@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Crystal Report Template: Work Order Print Report -->
+<!-- This is a stub file representing a Crystal Reports 8.5 report definition -->
+<!-- In a real VB6 system, this would be a binary .rpt file created with Crystal Reports Designer -->
+
+<CrystalReport xmlns="urn:crystal-reports:schemas" Version="8.5">
+  <ReportHeader>
+    <Title>Work Order Report</Title>
+    <ReportName>rptWorkOrder.rpt</ReportName>
+    <Author>Precision Parts Manufacturing</Author>
+    <Created>2001-01-15</Created>
+    <LastModified>2024-03-24</LastModified>
+  </ReportHeader>
+  
+  <DataSource>
+    <Type>ADO</Type>
+    <ConnectionString>Provider=Microsoft.Jet.OLEDB.4.0;Data Source=PrecisionParts.mdb</ConnectionString>
+    <Tables>
+      <Table name="WorkOrders" />
+      <Table name="Parts" />
+      <Table name="Customers" />
+    </Tables>
+  </DataSource>
+  
+  <RecordSelection>
+    <Formula>{WorkOrders.WorkOrderID} = {?WorkOrderID}</Formula>
+  </RecordSelection>
+  
+  <Sections>
+    <ReportHeader>
+      <Fields>
+        <Text>Precision Parts Manufacturing Inc.</Text>
+        <Text>Work Order - Traveler Sheet</Text>
+        <Image>company_logo.bmp</Image>
+      </Fields>
+    </ReportHeader>
+    
+    <PageHeader>
+      <Fields>
+        <Text>Work Order Number:</Text>
+        <Field>{WorkOrders.WorkOrderNumber}</Field>
+        <Text>Part Number:</Text>
+        <Field>{WorkOrders.PartNumber}</Field>
+        <Text>Description:</Text>
+        <Field>{Parts.Description}</Field>
+        <Text>Customer:</Text>
+        <Field>{Customers.CompanyName}</Field>
+        <Text>Customer PO:</Text>
+        <Field>{WorkOrders.CustomerPO}</Field>
+        <Text>Quantity:</Text>
+        <Field>{WorkOrders.Quantity}</Field>
+        <Text>Due Date:</Text>
+        <Field>{WorkOrders.DueDate}</Field>
+        <Text>Priority:</Text>
+        <Field>{WorkOrders.Priority}</Field>
+      </Fields>
+    </PageHeader>
+    
+    <Details>
+      <Fields>
+        <Text>Instructions:</Text>
+        <Field>{WorkOrders.Notes}</Field>
+        <Barcode Type="Code39">{WorkOrders.WorkOrderNumber}</Barcode>
+      </Fields>
+    </Details>
+    
+    <ReportFooter>
+      <Fields>
+        <Text>Operator Signature: ___________________ Date: _______</Text>
+        <Text>QC Inspector: ___________________ Date: _______</Text>
+      </Fields>
+    </ReportFooter>
+  </Sections>
+  
+  <PrintOptions>
+    <PaperSize>Letter</PaperSize>
+    <Orientation>Portrait</Orientation>
+    <Margins Top="0.5" Bottom="0.5" Left="0.5" Right="0.5" />
+  </PrintOptions>
+</CrystalReport>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Crystal Report Template: Inventory Status Report -->
+<!-- This is a stub file representing a Crystal Reports 8.5 report definition -->
+
+<CrystalReport xmlns="urn:crystal-reports:schemas" Version="8.5">
+  <ReportHeader>
+    <Title>Inventory Status Report</Title>
+    <ReportName>rptInventoryStatus.rpt</ReportName>
+    <Author>Precision Parts Manufacturing</Author>
+    <Created>2001-01-15</Created>
+    <LastModified>2024-03-24</LastModified>
+  </ReportHeader>
+  
+  <DataSource>
+    <Type>ADO</Type>
+    <ConnectionString>Provider=Microsoft.Jet.OLEDB.4.0;Data Source=PrecisionParts.mdb</ConnectionString>
+    <Tables>
+      <Table name="RawMaterials" />
+    </Tables>
+  </DataSource>
+  
+  <RecordSelection>
+    <Formula>{RawMaterials.Active} = True</Formula>
+  </RecordSelection>
+  
+  <Grouping>
+    <Group on="{RawMaterials.Supplier}" />
+  </Grouping>
+  
+  <Sections>
+    <ReportHeader>
+      <Fields>
+        <Text Size="16pt" Bold="true">Precision Parts Manufacturing Inc.</Text>
+        <Text Size="14pt">Raw Materials Inventory Status</Text>
+        <Text>Report Date:</Text>
+        <Formula>CurrentDate</Formula>
+      </Fields>
+    </ReportHeader>
+    
+    <GroupHeader>
+      <Fields>
+        <Text>Supplier:</Text>
+        <Field>{RawMaterials.Supplier}</Field>
+      </Fields>
+    </GroupHeader>
+    
+    <ColumnHeaders>
+      <Fields>
+        <Text>Material Code</Text>
+        <Text>Description</Text>
+        <Text>Qty On Hand</Text>
+        <Text>Reorder Point</Text>
+        <Text>Unit Cost</Text>
+        <Text>Location</Text>
+        <Text>Status</Text>
+      </Fields>
+    </ColumnHeaders>
+    
+    <Details>
+      <Fields>
+        <Field>{RawMaterials.MaterialCode}</Field>
+        <Field>{RawMaterials.Description}</Field>
+        <Field>{RawMaterials.QuantityOnHand}</Field>
+        <Field>{RawMaterials.ReorderPoint}</Field>
+        <Field>{RawMaterials.UnitCost}</Field>
+        <Field>{RawMaterials.Location}</Field>
+        <Formula>If {RawMaterials.QuantityOnHand} &lt; {RawMaterials.ReorderPoint} Then "REORDER" Else "OK"</Formula>
+      </Fields>
+      <Formatting>
+        <ConditionalFormatting Field="Status">
+          <Condition>{RawMaterials.QuantityOnHand} &lt; {RawMaterials.ReorderPoint}</Condition>
+          <Format BackColor="Red" ForeColor="White" />
+        </ConditionalFormatting>
+      </Formatting>
+    </Details>
+    
+    <GroupFooter>
+      <Fields>
+        <Text>Total Items:</Text>
+        <Summary Function="Count">{RawMaterials.MaterialCode}</Summary>
+        <Text>Total Value:</Text>
+        <Summary Function="Sum">{RawMaterials.QuantityOnHand} * {RawMaterials.UnitCost}</Summary>
+      </Fields>
+    </GroupFooter>
+    
+    <ReportFooter>
+      <Fields>
+        <Text>Grand Total Value:</Text>
+        <Summary Function="Sum">{RawMaterials.QuantityOnHand} * {RawMaterials.UnitCost}</Summary>
+        <Text>Items Below Reorder Point:</Text>
+        <Summary Function="Count" Condition="{RawMaterials.QuantityOnHand} &lt; {RawMaterials.ReorderPoint}">{RawMaterials.MaterialCode}</Summary>
+      </Fields>
+    </ReportFooter>
+  </Sections>
+  
+  <PrintOptions>
+    <PaperSize>Letter</PaperSize>
+    <Orientation>Landscape</Orientation>
+    <Margins Top="0.5" Bottom="0.5" Left="0.5" Right="0.5" />
+  </PrintOptions>
+</CrystalReport>

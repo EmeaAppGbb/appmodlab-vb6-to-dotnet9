@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Crystal Report Template: Shipping Label -->
+<!-- This is a stub file representing a Crystal Reports 8.5 report definition -->
+
+<CrystalReport xmlns="urn:crystal-reports:schemas" Version="8.5">
+  <ReportHeader>
+    <Title>Shipping Label</Title>
+    <ReportName>rptShippingLabel.rpt</ReportName>
+    <Author>Precision Parts Manufacturing</Author>
+    <Created>2001-01-15</Created>
+    <LastModified>2024-03-24</LastModified>
+  </ReportHeader>
+  
+  <DataSource>
+    <Type>ADO</Type>
+    <ConnectionString>Provider=Microsoft.Jet.OLEDB.4.0;Data Source=PrecisionParts.mdb</ConnectionString>
+    <Tables>
+      <Table name="ShippingManifests" />
+      <Table name="WorkOrders" />
+      <Table name="Customers" />
+    </Tables>
+  </DataSource>
+  
+  <RecordSelection>
+    <Formula>{ShippingManifests.ManifestID} = {?ManifestID}</Formula>
+  </RecordSelection>
+  
+  <Sections>
+    <Details>
+      <Fields>
+        <Text Size="18pt">FROM:</Text>
+        <Text>Precision Parts Manufacturing Inc.</Text>
+        <Text>123 Industrial Parkway</Text>
+        <Text>Manufacturing City, ST 12345</Text>
+        <Text Size="18pt">TO:</Text>
+        <Field>{ShippingManifests.ShipToName}</Field>
+        <Field>{ShippingManifests.ShipToAddress}</Field>
+        <Formula>{ShippingManifests.ShipToCity} + ", " + {ShippingManifests.ShipToState} + " " + {ShippingManifests.ShipToZipCode}</Formula>
+        <Text>Carrier:</Text>
+        <Field>{ShippingManifests.Carrier}</Field>
+        <Text>Tracking:</Text>
+        <Field>{ShippingManifests.TrackingNumber}</Field>
+        <Barcode Type="Code128">{ShippingManifests.TrackingNumber}</Barcode>
+        <Text>Work Order:</Text>
+        <Field>{WorkOrders.WorkOrderNumber}</Field>
+        <Text>Weight:</Text>
+        <Formula>{ShippingManifests.Weight} + " lbs"</Formula>
+        <Text>Boxes:</Text>
+        <Field>{ShippingManifests.Boxes}</Field>
+        <Text>Ship Date:</Text>
+        <Field>{ShippingManifests.ShipDate}</Field>
+      </Fields>
+    </Details>
+  </Sections>
+  
+  <PrintOptions>
+    <PaperSize>Label 4x6</PaperSize>
+    <Orientation>Portrait</Orientation>
+    <Margins Top="0.25" Bottom="0.25" Left="0.25" Right="0.25" />
+  </PrintOptions>
+</CrystalReport>

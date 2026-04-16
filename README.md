@@ -16,6 +16,23 @@
 
 ---
 
+## 📸 SCREENSHOTS 📸
+
+### VB6 Legacy Codebase Preview
+
+| Screenshot | Description |
+|:---:|:---|
+| ![Project Structure](assets/screenshots/01-project-structure.png) | **Project Structure** — 8 forms, 4 modules, 3 classes, Crystal Reports |
+| ![Login Form](assets/screenshots/02-frm-login.png) | **frmLogin.frm** — Plain-text password authentication 😱 |
+| ![Main MDI Form](assets/screenshots/03-frm-main.png) | **frmMain.frm** — MDI parent with menus and role-based permissions |
+| ![Inventory Grid](assets/screenshots/04-frm-inventory.png) | **frmInventory.frm** — MSFlexGrid with bubble sort and DoEvents |
+| ![Global Variables](assets/screenshots/05-mod-globals.png) | **modGlobals.bas** — 50+ global variables and registry config |
+| ![Database Module](assets/screenshots/06-mod-database.png) | **modDatabase.bas** — ADO/Jet OLEDB connection management |
+| ![Work Order Class](assets/screenshots/07-cls-workorder.png) | **clsWorkOrder.cls** — Mixed business logic and data access |
+| ![Anti-Patterns](assets/screenshots/08-anti-patterns.png) | **Anti-Patterns** — Legacy issues vs .NET 9 modernization targets |
+
+---
+
 ## 💾 OVERVIEW 💾
 
 **Welcome to the time machine!** 🕰️✨ 

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="PrecisionParts.Core/PrecisionParts.Core.csproj" />
+  <Project Path="PrecisionParts.Infrastructure/PrecisionParts.Infrastructure.csproj" />
+  <Project Path="PrecisionParts.Tests/PrecisionParts.Tests.csproj" />
+  <Project Path="PrecisionParts.Web/PrecisionParts.Web.csproj" />
+</Solution>

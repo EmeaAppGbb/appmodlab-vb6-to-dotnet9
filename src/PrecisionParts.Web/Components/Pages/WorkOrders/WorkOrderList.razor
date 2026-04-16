@@ -1,0 +1,132 @@
+@* WorkOrderList.razor — replaces VB6 frmWorkOrder grid view *@
+@page "/work-orders"
+@page "/work-orders/{WorkOrderId:int}"
+
+@using PrecisionParts.Core.Enums
+@using PrecisionParts.Core.Models
+@using PrecisionParts.Core.Services
+
+@inject IWorkOrderService WorkOrderService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Work Orders - PrecisionParts</PageTitle>
+
+<h2>Work Orders</h2>
+
+@if (WorkOrderId.HasValue && _selectedOrder is not null)
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <h4>@_selectedOrder.WorkOrderNumber</h4>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="() => Navigation.NavigateTo(\"work-orders\")">← Back to List</button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl>
+                        <dt>Part Number</dt><dd>@_selectedOrder.PartNumber</dd>
+                        <dt>Quantity</dt><dd>@_selectedOrder.Quantity (Completed: @_selectedOrder.QuantityCompleted)</dd>
+                        <dt>Status</dt><dd><span class="badge @GetStatusClass(_selectedOrder.Status)">@_selectedOrder.Status</span></dd>
+                        <dt>Priority</dt><dd>@_selectedOrder.Priority</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <dl>
+                        <dt>Due Date</dt><dd>@_selectedOrder.DueDate?.ToString("MM/dd/yyyy")</dd>
+                        <dt>Start Date</dt><dd>@_selectedOrder.StartDate?.ToString("MM/dd/yyyy")</dd>
+                        <dt>Progress</dt><dd>@_selectedOrder.PercentComplete.ToString("F1")%</dd>
+                        <dt>Estimated Cost</dt><dd>@_selectedOrder.EstimatedCost?.ToString("C")</dd>
+                    </dl>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(_selectedOrder.Notes))
+            {
+                <p><strong>Notes:</strong> @_selectedOrder.Notes</p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="mb-3">
+        <label class="form-label">Filter by Status:</label>
+        <select class="form-select w-auto d-inline-block" @onchange="OnStatusFilterChanged">
+            <option value="">All</option>
+            @foreach (var status in Enum.GetValues<WorkOrderStatus>())
+            {
+                <option value="@status">@status</option>
+            }
+        </select>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>WO Number</th>
+                <th>Part</th>
+                <th>Qty</th>
+                <th>Completed</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Due Date</th>
+                <th>Progress</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wo in _workOrders)
+            {
+                <tr class="@(wo.IsOverdue ? "table-danger" : "")" style="cursor:pointer"
+                    @onclick="() => Navigation.NavigateTo($\"work-orders/{wo.WorkOrderId}\")">
+                    <td>@wo.WorkOrderNumber</td>
+                    <td>@wo.PartNumber</td>
+                    <td>@wo.Quantity</td>
+                    <td>@wo.QuantityCompleted</td>
+                    <td><span class="badge @GetStatusClass(wo.Status)">@wo.Status</span></td>
+                    <td>@wo.Priority</td>
+                    <td>@wo.DueDate?.ToString("MM/dd/yyyy")</td>
+                    <td>@wo.PercentComplete.ToString("F0")%</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public int? WorkOrderId { get; set; }
+
+    private IEnumerable<WorkOrder> _workOrders = [];
+    private WorkOrder? _selectedOrder;
+    private WorkOrderStatus? _statusFilter;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (WorkOrderId.HasValue)
+            _selectedOrder = await WorkOrderService.GetByIdAsync(WorkOrderId.Value);
+        else
+            await LoadWorkOrders();
+    }
+
+    private async Task LoadWorkOrders()
+    {
+        _workOrders = await WorkOrderService.GetAllAsync(_statusFilter);
+    }
+
+    private async Task OnStatusFilterChanged(ChangeEventArgs e)
+    {
+        _statusFilter = string.IsNullOrEmpty(e.Value?.ToString())
+            ? null
+            : Enum.Parse<WorkOrderStatus>(e.Value.ToString()!);
+        await LoadWorkOrders();
+    }
+
+    private static string GetStatusClass(WorkOrderStatus status) => status switch
+    {
+        WorkOrderStatus.New => "bg-info",
+        WorkOrderStatus.InProgress => "bg-primary",
+        WorkOrderStatus.Completed => "bg-success",
+        WorkOrderStatus.OnHold => "bg-warning text-dark",
+        WorkOrderStatus.Cancelled => "bg-secondary",
+        _ => "bg-light"
+    };
+}

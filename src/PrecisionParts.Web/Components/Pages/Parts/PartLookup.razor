@@ -1,0 +1,72 @@
+@* PartLookup.razor — replaces VB6 frmPartLookup.frm *@
+@page "/parts"
+
+@using PrecisionParts.Core.Models
+@using PrecisionParts.Core.Services
+
+@inject IPartService PartService
+@rendermode InteractiveServer
+
+<PageTitle>Parts Lookup - PrecisionParts</PageTitle>
+
+<h2>Parts Lookup</h2>
+
+<div class="mb-3">
+    <div class="input-group" style="max-width: 400px;">
+        <input class="form-control" placeholder="Search part number, description, or material..."
+               @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearch" />
+        <button class="btn btn-outline-primary" @onclick="OnSearch">Search</button>
+    </div>
+</div>
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Part Number</th>
+            <th>Description</th>
+            <th>Material</th>
+            <th>Unit Cost</th>
+            <th>Weight</th>
+            <th>Rev</th>
+            <th>Category</th>
+            <th>Active</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var part in _parts)
+        {
+            <tr>
+                <td><strong>@part.PartNumber</strong></td>
+                <td>@part.Description</td>
+                <td>@part.Material</td>
+                <td>@part.UnitCost.ToString("C")</td>
+                <td>@part.Weight lbs</td>
+                <td>@part.RevisionLevel</td>
+                <td>@part.Category</td>
+                <td>@(part.IsActive ? "✓" : "✗")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!_parts.Any())
+{
+    <p class="text-muted">No parts found matching your search.</p>
+}
+
+@code {
+    private string _searchTerm = "";
+    private IEnumerable<Part> _parts = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _parts = await PartService.GetAllAsync();
+    }
+
+    private async Task OnSearch()
+    {
+        _parts = string.IsNullOrWhiteSpace(_searchTerm)
+            ? await PartService.GetAllAsync()
+            : await PartService.SearchAsync(_searchTerm);
+    }
+}

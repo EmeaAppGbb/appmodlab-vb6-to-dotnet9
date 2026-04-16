@@ -1,7 +1,116 @@
-﻿@page "/"
+﻿@* Dashboard — replaces VB6 frmMain status bar and auto-refresh summary *@
+@page "/"
 
-<PageTitle>Home</PageTitle>
+@using PrecisionParts.Core.Enums
+@using PrecisionParts.Core.Services
 
-<h1>Hello, world!</h1>
+@inject IWorkOrderService WorkOrderService
+@inject IInventoryService InventoryService
 
-Welcome to your new app.
+<PageTitle>Dashboard - PrecisionParts</PageTitle>
+
+<h1>PrecisionParts Manufacturing Dashboard</h1>
+
+@if (_loading)
+{
+    <p><em>Loading dashboard data...</em></p>
+}
+else
+{
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Active Work Orders</h5>
+                    <p class="card-text display-4">@_activeWorkOrders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Overdue</h5>
+                    <p class="card-text display-4">@_overdueWorkOrders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Completed</h5>
+                    <p class="card-text display-4">@_completedWorkOrders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Low Stock Items</h5>
+                    <p class="card-text display-4">@_lowStockCount</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mt-4">Recent Work Orders</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>WO Number</th>
+                <th>Part</th>
+                <th>Qty</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Due Date</th>
+                <th>Progress</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wo in _recentWorkOrders)
+            {
+                <tr class="@(wo.IsOverdue ? "table-danger" : "")">
+                    <td><a href="work-orders/@wo.WorkOrderId">@wo.WorkOrderNumber</a></td>
+                    <td>@wo.PartNumber</td>
+                    <td>@wo.Quantity</td>
+                    <td><span class="badge @GetStatusBadgeClass(wo.Status)">@wo.Status</span></td>
+                    <td>@wo.Priority</td>
+                    <td>@wo.DueDate?.ToString("MM/dd/yyyy")</td>
+                    <td>@wo.PercentComplete.ToString("F0")%</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private bool _loading = true;
+    private int _activeWorkOrders;
+    private int _overdueWorkOrders;
+    private int _completedWorkOrders;
+    private int _lowStockCount;
+    private IEnumerable<PrecisionParts.Core.Models.WorkOrder> _recentWorkOrders = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allOrders = (await WorkOrderService.GetAllAsync()).ToList();
+        _activeWorkOrders = allOrders.Count(w => w.Status == WorkOrderStatus.InProgress);
+        _overdueWorkOrders = allOrders.Count(w => w.IsOverdue);
+        _completedWorkOrders = allOrders.Count(w => w.Status == WorkOrderStatus.Completed);
+        _recentWorkOrders = allOrders.Take(10);
+
+        var lowStock = await InventoryService.GetLowStockItemsAsync();
+        _lowStockCount = lowStock.Count();
+
+        _loading = false;
+    }
+
+    private static string GetStatusBadgeClass(WorkOrderStatus status) => status switch
+    {
+        WorkOrderStatus.New => "bg-info",
+        WorkOrderStatus.InProgress => "bg-primary",
+        WorkOrderStatus.Completed => "bg-success",
+        WorkOrderStatus.OnHold => "bg-warning text-dark",
+        WorkOrderStatus.Cancelled => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+}

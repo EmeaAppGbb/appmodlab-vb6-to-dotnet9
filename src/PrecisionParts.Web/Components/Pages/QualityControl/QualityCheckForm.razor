@@ -1,0 +1,130 @@
+@* QualityCheckForm.razor — replaces VB6 frmQualityCheck.frm *@
+@page "/quality-control"
+
+@using PrecisionParts.Core.Enums
+@using PrecisionParts.Core.Models
+@using PrecisionParts.Core.Services
+
+@inject IQualityCheckService QcService
+@inject IWorkOrderService WorkOrderService
+@rendermode InteractiveServer
+
+<PageTitle>Quality Control - PrecisionParts</PageTitle>
+
+<h2>Quality Control Inspections</h2>
+
+<div class="card mb-4">
+    <div class="card-header"><h5>New Inspection</h5></div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Work Order</label>
+                <select class="form-select" @bind="_newCheck.WorkOrderId">
+                    <option value="0">Select...</option>
+                    @foreach (var wo in _workOrders)
+                    {
+                        <option value="@wo.WorkOrderId">@wo.WorkOrderNumber - @wo.PartNumber</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Inspector</label>
+                <input class="form-control" @bind="_newCheck.Inspector" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Result</label>
+                <select class="form-select" @bind="_newCheck.Result">
+                    @foreach (var result in Enum.GetValues<QualityCheckResult>())
+                    {
+                        <option value="@result">@result</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Defects</label>
+                <input type="number" class="form-control" @bind="_newCheck.DefectCount" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Measurements</label>
+                <input class="form-control" @bind="_newCheck.Measurements" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Notes</label>
+                <input class="form-control" @bind="_newCheck.Notes" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary" @onclick="SubmitCheck" disabled="@(_newCheck.WorkOrderId == 0)">
+                    Record Inspection
+                </button>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <div class="alert @(_isError ? "alert-danger" : "alert-success") mt-3">@_message</div>
+        }
+    </div>
+</div>
+
+<h3>Recent Inspections</h3>
+<table class="table table-striped">
+    <thead>
+        <tr><th>Date</th><th>Work Order</th><th>Inspector</th><th>Result</th><th>Defects</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var qc in _recentChecks)
+        {
+            <tr class="@(qc.Result == QualityCheckResult.Fail ? "table-danger" : "")">
+                <td>@qc.CheckDate.ToString("MM/dd/yyyy HH:mm")</td>
+                <td>@qc.WorkOrder?.WorkOrderNumber</td>
+                <td>@qc.Inspector</td>
+                <td><span class="badge @GetResultBadge(qc.Result)">@qc.Result</span></td>
+                <td>@qc.DefectCount</td>
+                <td>@qc.Notes</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private QualityCheck _newCheck = new();
+    private IEnumerable<WorkOrder> _workOrders = [];
+    private IEnumerable<QualityCheck> _recentChecks = [];
+    private string? _message;
+    private bool _isError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _workOrders = await WorkOrderService.GetAllAsync();
+        _recentChecks = await QcService.GetByDateRangeAsync(
+            DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+    }
+
+    private async Task SubmitCheck()
+    {
+        try
+        {
+            await QcService.CreateAsync(_newCheck);
+            _message = $"Inspection recorded: {_newCheck.Result}";
+            if (_newCheck.Result == QualityCheckResult.Fail)
+                _message += " — Work order placed On Hold.";
+            _isError = false;
+            _newCheck = new QualityCheck();
+            _recentChecks = await QcService.GetByDateRangeAsync(
+                DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error: {ex.Message}";
+            _isError = true;
+        }
+    }
+
+    private static string GetResultBadge(QualityCheckResult result) => result switch
+    {
+        QualityCheckResult.Pass => "bg-success",
+        QualityCheckResult.Fail => "bg-danger",
+        QualityCheckResult.Conditional => "bg-warning text-dark",
+        QualityCheckResult.RecheckRequired => "bg-info",
+        _ => "bg-secondary"
+    };
+}

@@ -1,0 +1,100 @@
+@* InventoryList.razor — replaces VB6 frmInventory.frm with MSFlexGrid *@
+@page "/inventory"
+
+@using PrecisionParts.Core.Enums
+@using PrecisionParts.Core.Models
+@using PrecisionParts.Core.Services
+
+@inject IInventoryService InventoryService
+@rendermode InteractiveServer
+
+<PageTitle>Inventory - PrecisionParts</PageTitle>
+
+<h2>Raw Materials Inventory</h2>
+
+<div class="mb-3">
+    <label class="form-label">Filter by Supplier:</label>
+    <select class="form-select w-auto d-inline-block" @onchange="OnSupplierFilterChanged">
+        <option value="">All Suppliers</option>
+        @foreach (var supplier in _suppliers)
+        {
+            <option value="@supplier">@supplier</option>
+        }
+    </select>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Description</th>
+            <th>Supplier</th>
+            <th>On Hand</th>
+            <th>Reorder Pt</th>
+            <th>Unit Cost</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var mat in _materials)
+        {
+            var status = mat.GetStockStatus();
+            <tr class="@GetRowClass(status)">
+                <td>@mat.MaterialCode</td>
+                <td>@mat.Description</td>
+                <td>@mat.Supplier</td>
+                <td>@mat.QuantityOnHand</td>
+                <td>@mat.ReorderPoint</td>
+                <td>@mat.UnitCost.ToString("C")</td>
+                <td>@mat.Location</td>
+                <td><span class="badge @GetBadgeClass(status)">@GetStatusLabel(status)</span></td>
+                <td>@mat.TotalValue.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private IEnumerable<RawMaterial> _materials = [];
+    private List<string> _suppliers = [];
+    private string? _supplierFilter;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allMaterials = (await InventoryService.GetAllAsync()).ToList();
+        _suppliers = allMaterials.Where(m => m.Supplier != null).Select(m => m.Supplier!).Distinct().OrderBy(s => s).ToList();
+        _materials = allMaterials;
+    }
+
+    private async Task OnSupplierFilterChanged(ChangeEventArgs e)
+    {
+        _supplierFilter = string.IsNullOrEmpty(e.Value?.ToString()) ? null : e.Value.ToString();
+        _materials = await InventoryService.GetAllAsync(_supplierFilter);
+    }
+
+    private static string GetRowClass(StockStatus status) => status switch
+    {
+        StockStatus.Critical => "table-danger",
+        StockStatus.ReorderRequired => "table-warning",
+        StockStatus.LowStock => "table-info",
+        _ => ""
+    };
+
+    private static string GetBadgeClass(StockStatus status) => status switch
+    {
+        StockStatus.Critical => "bg-danger",
+        StockStatus.ReorderRequired => "bg-warning text-dark",
+        StockStatus.LowStock => "bg-info",
+        _ => "bg-success"
+    };
+
+    private static string GetStatusLabel(StockStatus status) => status switch
+    {
+        StockStatus.Critical => "CRITICAL",
+        StockStatus.ReorderRequired => "Reorder",
+        StockStatus.LowStock => "Low",
+        _ => "OK"
+    };
+}

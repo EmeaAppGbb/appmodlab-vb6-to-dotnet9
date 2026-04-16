@@ -1,0 +1,112 @@
+@* ShippingManifest.razor — replaces VB6 frmShipping.frm *@
+@page "/shipping"
+
+@using PrecisionParts.Core.Enums
+@using PrecisionParts.Core.Models
+@using PrecisionParts.Core.Services
+
+@inject IShippingService ShippingService
+@inject IWorkOrderService WorkOrderService
+@rendermode InteractiveServer
+
+<PageTitle>Shipping - PrecisionParts</PageTitle>
+
+<h2>Shipping Manifests</h2>
+
+<div class="card mb-4">
+    <div class="card-header"><h5>Create Shipping Manifest</h5></div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Work Order (Completed only)</label>
+                <select class="form-select" @bind="_newManifest.WorkOrderId">
+                    <option value="0">Select...</option>
+                    @foreach (var wo in _completedOrders)
+                    {
+                        <option value="@wo.WorkOrderId">@wo.WorkOrderNumber - @wo.PartNumber</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Carrier</label>
+                <select class="form-select" @bind="_newManifest.Carrier">
+                    <option value="">Select...</option>
+                    <option>UPS</option>
+                    <option>FedEx</option>
+                    <option>USPS</option>
+                    <option>DHL</option>
+                    <option>Freight</option>
+                    <option>Local Delivery</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tracking Number</label>
+                <input class="form-control" @bind="_newManifest.TrackingNumber" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Boxes</label>
+                <input type="number" class="form-control" @bind="_newManifest.Boxes" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ship To Name</label>
+                <input class="form-control" @bind="_newManifest.ShipToName" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Ship To Address</label>
+                <input class="form-control" @bind="_newManifest.ShipToAddress" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary" @onclick="CreateManifest"
+                        disabled="@(_newManifest.WorkOrderId == 0)">
+                    Ship Order
+                </button>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <div class="alert alert-success mt-3">@_message</div>
+        }
+    </div>
+</div>
+
+<h3>Recent Shipments</h3>
+<table class="table table-striped">
+    <thead>
+        <tr><th>Manifest #</th><th>Work Order</th><th>Ship Date</th><th>Carrier</th><th>Tracking</th><th>Boxes</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var m in _manifests)
+        {
+            <tr>
+                <td>@m.ManifestNumber</td>
+                <td>@m.WorkOrder?.WorkOrderNumber</td>
+                <td>@m.ShipDate.ToString("MM/dd/yyyy")</td>
+                <td>@m.Carrier</td>
+                <td>@m.TrackingNumber</td>
+                <td>@m.Boxes</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private ShippingManifest _newManifest = new() { Boxes = 1 };
+    private IEnumerable<WorkOrder> _completedOrders = [];
+    private IEnumerable<ShippingManifest> _manifests = [];
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _completedOrders = await WorkOrderService.GetAllAsync(WorkOrderStatus.Completed);
+        _manifests = await ShippingService.GetAllAsync();
+    }
+
+    private async Task CreateManifest()
+    {
+        var result = await ShippingService.CreateAsync(_newManifest);
+        _message = $"Manifest {result.ManifestNumber} created. Work order marked as Completed.";
+        _newManifest = new ShippingManifest { Boxes = 1 };
+        _completedOrders = await WorkOrderService.GetAllAsync(WorkOrderStatus.Completed);
+        _manifests = await ShippingService.GetAllAsync();
+    }
+}

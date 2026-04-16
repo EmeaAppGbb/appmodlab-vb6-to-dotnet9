@@ -19,7 +19,7 @@
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between">
             <h4>@_selectedOrder.WorkOrderNumber</h4>
-            <button class="btn btn-sm btn-outline-secondary" @onclick="() => Navigation.NavigateTo(\"work-orders\")">← Back to List</button>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="GoToList">← Back to List</button>
         </div>
         <div class="card-body">
             <div class="row">
@@ -77,7 +77,7 @@ else
             @foreach (var wo in _workOrders)
             {
                 <tr class="@(wo.IsOverdue ? "table-danger" : "")" style="cursor:pointer"
-                    @onclick="() => Navigation.NavigateTo($\"work-orders/{wo.WorkOrderId}\")">
+                    @onclick="() => GoToWorkOrder(wo.WorkOrderId)">
                     <td>@wo.WorkOrderNumber</td>
                     <td>@wo.PartNumber</td>
                     <td>@wo.Quantity</td>
@@ -129,4 +129,7 @@ else
         WorkOrderStatus.Cancelled => "bg-secondary",
         _ => "bg-light"
     };
+
+    private void GoToList() => Navigation.NavigateTo("work-orders");
+    private void GoToWorkOrder(int id) => Navigation.NavigateTo($"work-orders/{id}");
 }

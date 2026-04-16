@@ -29,7 +29,7 @@ public class InventoryService : IInventoryService
         if (!string.IsNullOrWhiteSpace(supplierFilter))
             query = query.Where(r => r.Supplier == supplierFilter);
 
-        return await query.OrderBy(r => r.MaterialName).ToListAsync();
+        return await query.OrderBy(r => r.Description).ToListAsync();
     }
 
     public async Task<RawMaterial?> GetByIdAsync(int materialId)
@@ -46,7 +46,7 @@ public class InventoryService : IInventoryService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Material {Name} created (ID: {Id})",
-            material.MaterialName, material.MaterialId);
+            material.Description, material.MaterialId);
         return material;
     }
 
@@ -110,7 +110,7 @@ public class InventoryService : IInventoryService
         if (status is StockStatus.ReorderRequired or StockStatus.Critical)
         {
             _logger.LogWarning("Material {Name} stock alert: {Status} (Qty: {Qty})",
-                material.MaterialName, status, material.QuantityOnHand);
+                material.Description, status, material.QuantityOnHand);
         }
 
         return true;

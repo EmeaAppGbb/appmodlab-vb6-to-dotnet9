@@ -11,7 +11,7 @@ modernizationTools: []
 agenticTools: []
 tags: ["vb6-migration", "desktop-to-web", "access-to-sql", "legacy-modernization"]
 extensions: ["github.copilot"]
-thumbnail: "assets/screenshots/01-project-structure.png"
+thumbnail: "https://raw.githubusercontent.com/EmeaAppGbb/appmodlab-vb6-to-dotnet9/main/assets/thumbnail-gpt-image.png"
 video: ""
 version: "1.0.0"
 screenshots:
